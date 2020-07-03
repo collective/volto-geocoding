@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { Button, Grid, Form } from 'semantic-ui-react';
 import { Map, TileLayer, Marker, Popup } from 'react-leaflet';
 import uniqBy from 'lodash.uniqby';
+import debounce from 'lodash.debounce';
 import { useCombobox } from 'downshift';
 
 const messages = defineMessages({
@@ -23,20 +24,6 @@ const messages = defineMessages({
     defaultMessage: 'Selezionato',
   },
 });
-
-const useDebouncedEffect = (effect, delay, deps) => {
-  const callback = useCallback(effect, deps);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      callback();
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [callback, delay]);
-};
 
 const OSMMap = ({ position, address, zoom = 15 }) => (
   <Map center={position} zoom={zoom} id="geocoded-result">
@@ -94,10 +81,8 @@ const GeoLocationWidget = ({
     onSelectedItemChange: ({ address, position: { lat, lng } }) =>
       onChange(id, { description: address, lat, lng }),
     onInputValueChange: ({ inputValue }) =>
-      doSearch(inputValue, setSearchSuggestions),
+      debounce(doSearch(inputValue, setSearchSuggestions), 600),
   });
-
-  // useDebouncedEffect(() => doSearch(), 600, [searchAddress]);
 
   return (
     <Form.Field inline required={required} id={id}>
