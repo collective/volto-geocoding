@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { Button, Grid, Form } from 'semantic-ui-react';
-import { Map, TileLayer, Marker, Popup } from 'react-leaflet';
 import uniqBy from 'lodash.uniqby';
 import debounce from 'lodash.debounce';
 import { useCombobox } from 'downshift';
+
+import { OSMMap } from 'volto-geocoding';
 
 const messages = defineMessages({
   geolocation: {
@@ -23,19 +24,20 @@ const messages = defineMessages({
     id: 'geolocation_selected',
     defaultMessage: 'Selezionato',
   },
+  geolocationClear: {
+    id: 'geolocationClear',
+    defaultMessage: 'Elimina',
+  },
 });
 
-const OSMMap = ({ position, address, zoom = 15 }) => (
-  <Map center={position} zoom={zoom} id="geocoded-result">
-    <TileLayer
-      attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    />
-    <Marker position={position}>
-      <Popup>{address}</Popup>
-    </Marker>
-  </Map>
-);
+const useDebouncedCallback = (callback, delay) => {
+  const callbackRef = useRef();
+  callbackRef.current = callback;
+  return useCallback(
+    debounce((...args) => callbackRef.current(...args), delay),
+    [],
+  );
+};
 
 const GeoLocationWidget = ({
   value,
@@ -49,39 +51,50 @@ const GeoLocationWidget = ({
   const [searchSuggestions, setSearchSuggestions] = useState([]);
 
   const doSearch = async (searchAddress, setterCallback) => {
-    try {
-      const response = await fetch(
-        `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${searchAddress}&outFields=Match_addr,Addr_type`,
-      );
-      const data = await response.json();
-      const results = uniqBy(
-        (data?.candidates ?? []).map(candidate => ({
-          ...candidate,
-          key: `${candidate.location?.y ?? 0} ${candidate.location?.x ?? 0}`,
-        })),
-        'key',
-      );
-      setterCallback(results);
-    } catch (err) {
-      console.error(err);
+    if (searchAddress?.length > 0) {
+      console.log(searchAddress);
+
+      try {
+        const response = await fetch(
+          `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${searchAddress}&outFields=Match_addr,Addr_type`,
+        );
+        const data = await response.json();
+        const results = uniqBy(
+          (data?.candidates ?? []).map(candidate => ({
+            ...candidate,
+            key: `${candidate.location?.y ?? 0} ${candidate.location?.x ?? 0}`,
+          })),
+          'key',
+        );
+        setterCallback(results);
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      setterCallback([]);
     }
   };
 
   const {
     isOpen,
-    getToggleButtonProps,
     getLabelProps,
     getMenuProps,
     getInputProps,
     getComboboxProps,
     highlightedIndex,
     getItemProps,
+    setInputValue,
   } = useCombobox({
     items: searchSuggestions,
-    onSelectedItemChange: ({ address, position: { lat, lng } }) =>
-      onChange(id, { description: address, lat, lng }),
-    onInputValueChange: ({ inputValue }) =>
-      debounce(doSearch(inputValue, setSearchSuggestions), 600),
+    defaultInputValue: '',
+    onSelectedItemChange: ({ selectedItem: { address, location } }) => {
+      onChange(id, { description: address, lat: location.y, lng: location.x });
+      setInputValue('');
+    },
+    onInputValueChange: useDebouncedCallback(
+      ({ inputValue }) => doSearch(inputValue, setSearchSuggestions),
+      600,
+    ),
   });
 
   return (
@@ -98,10 +111,12 @@ const GeoLocationWidget = ({
           <Grid.Column width="8" className="geolocation-widget">
             {value && Object.keys(value).length > 0 ? (
               <React.Fragment>
-                <OSMMap
-                  position={[value.lat, value.lng]}
-                  address={value.description}
-                />
+                {__CLIENT__ && (
+                  <OSMMap
+                    position={[value.lat, value.lng]}
+                    address={value.description}
+                  />
+                )}
                 <div className="geolocation-selected-wrapper">
                   {value.description && (
                     <span className="geolocation-selected">
@@ -116,7 +131,11 @@ const GeoLocationWidget = ({
                   <Button
                     icon="trash"
                     size="mini"
-                    onClick={() => onChange(id, {})}
+                    title={intl.formatMessage(messages.geolocationClear)}
+                    onClick={() => {
+                      onChange(id, null);
+                      setInputValue('');
+                    }}
                   />
                 </div>
               </React.Fragment>
@@ -129,12 +148,6 @@ const GeoLocationWidget = ({
                   <label {...getLabelProps()}>Choose an element:</label>
                   <div className="combobox" {...getComboboxProps()}>
                     <input {...getInputProps()} />
-                    <button
-                      {...getToggleButtonProps()}
-                      aria-label="toggle menu"
-                    >
-                      &#8595;
-                    </button>
                   </div>
                   <ul {...getMenuProps()}>
                     {isOpen &&
