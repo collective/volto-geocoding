@@ -10,11 +10,11 @@ import { OSMMap } from 'volto-geocoding';
 const messages = defineMessages({
   geolocation: {
     id: 'geolocation',
-    defaultMessage: 'Geolocalizzazione',
+    defaultMessage: 'Geolocation',
   },
   geolocationPlaceholder: {
     id: 'geolocation_placeholder',
-    defaultMessage: 'Cerca un luogo...',
+    defaultMessage: 'Search a venue...',
   },
   geolocationNoResults: {
     id: 'geolocation_noresults',
@@ -22,11 +22,11 @@ const messages = defineMessages({
   },
   geolocationSelected: {
     id: 'geolocation_selected',
-    defaultMessage: 'Selezionato',
+    defaultMessage: 'Selected',
   },
   geolocationClear: {
     id: 'geolocationClear',
-    defaultMessage: 'Elimina',
+    defaultMessage: 'Clear',
   },
 });
 
