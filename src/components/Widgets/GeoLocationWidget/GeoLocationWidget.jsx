@@ -5,7 +5,7 @@ import uniqBy from 'lodash.uniqby';
 import debounce from 'lodash.debounce';
 import { useCombobox } from 'downshift';
 
-import { OSMMap } from 'volto-geocoding';
+import { OSMMap } from '../../../';
 
 const messages = defineMessages({
   geolocation: {
@@ -33,6 +33,7 @@ const messages = defineMessages({
 const useDebouncedCallback = (callback, delay) => {
   const callbackRef = useRef();
   callbackRef.current = callback;
+
   return useCallback(
     debounce((...args) => callbackRef.current(...args), delay),
     [],
