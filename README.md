@@ -112,4 +112,44 @@ yarn
 
 ## Usage
 
-`Document your addon here`
+Once you've installed the addon, you have to configure it.
+
+Due to `react-leaflet` dependency needs, you have to add in the `<head>` its stylesheets, so:
+
+```jsx
+// in Html.jsx
+
+       <head>
+          ...
+
+          <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+            integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+            crossOrigin=""
+          />
+       </head>
+```
+
+Then, use the widget for the field you need:
+
+```js
+// config.js
+
+import { GeoLocationWidget } from 'volto-geocoding';
+
+export const widgets = {
+  ...defaultWidgets,
+  id: {
+    ...defaultWidgets.id,
+    geolocation: GeoLocationWidget,
+  },
+};
+```
+
+### Map
+
+This library exports not only `GeoLocationWidget` but also a component to render a map using OpenStreetMap: `OSMMap`.
+You can find it in `src/components/OSMMap/OSMMap.jsx`.
+
+It's a very simple map component accepting a point in coordinates (latitude, longitude) and an address (or description) to be shown within the popup.
