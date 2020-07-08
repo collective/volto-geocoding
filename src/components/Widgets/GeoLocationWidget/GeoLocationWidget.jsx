@@ -7,6 +7,8 @@ import { useCombobox } from 'downshift';
 
 import { OSMMap } from '../../../';
 
+import './GeoLocationWidget.css';
+
 const messages = defineMessages({
   geolocation: {
     id: 'geolocation',
@@ -15,10 +17,6 @@ const messages = defineMessages({
   geolocationPlaceholder: {
     id: 'geolocation_placeholder',
     defaultMessage: 'Search a venue...',
-  },
-  geolocationNoResults: {
-    id: 'geolocation_noresults',
-    defaultMessage: 'No results for "{userInput}"',
   },
   geolocationSelected: {
     id: 'geolocation_selected',
@@ -78,7 +76,6 @@ const GeoLocationWidget = ({
 
   const {
     isOpen,
-    getLabelProps,
     getMenuProps,
     getInputProps,
     getComboboxProps,
@@ -88,6 +85,8 @@ const GeoLocationWidget = ({
   } = useCombobox({
     items: searchSuggestions,
     defaultInputValue: '',
+    initialHighlightedIndex: 0,
+    itemToString: item => item.address,
     onSelectedItemChange: ({ selectedItem: { address, location } }) => {
       onChange(id, { description: address, lat: location.y, lng: location.x });
       setInputValue('');
@@ -101,7 +100,7 @@ const GeoLocationWidget = ({
   return (
     <Form.Field inline required={required} id={id}>
       <Grid>
-        <Grid.Row>
+        <Grid.Row stretched>
           <Grid.Column width="4">
             <div className="wrapper">
               <label htmlFor="geolocation-search">
@@ -141,32 +140,33 @@ const GeoLocationWidget = ({
                 </div>
               </React.Fragment>
             ) : (
-              <div
-                className="autosuggest-address ui input"
-                style={{ position: 'relative' }}
-              >
-                <div>
-                  <label {...getLabelProps()}>Choose an element:</label>
-                  <div className="combobox" {...getComboboxProps()}>
-                    <input {...getInputProps()} />
-                  </div>
-                  <ul {...getMenuProps()}>
-                    {isOpen &&
-                      searchSuggestions.map((item, index) => (
-                        <li
-                          style={
-                            highlightedIndex === index
-                              ? { backgroundColor: '#bde4ff' }
-                              : {}
-                          }
-                          key={`${item.location.x}${item.location.y}${index}`}
-                          {...getItemProps({ item, index })}
-                        >
-                          {item.address}
-                        </li>
-                      ))}
-                  </ul>
+              <div className="autosuggest-address ui input">
+                <div className="combobox" {...getComboboxProps()}>
+                  <input
+                    {...getInputProps()}
+                    type="text"
+                    className="combobox-input"
+                    placeholder={intl.formatMessage(
+                      messages.geolocationPlaceholder,
+                    )}
+                  />
                 </div>
+                <ul {...getMenuProps()} className="combobox-listbox">
+                  {isOpen &&
+                    searchSuggestions.map((item, index) => (
+                      <li
+                        style={
+                          highlightedIndex === index
+                            ? { backgroundColor: '#bde4ff' }
+                            : {}
+                        }
+                        key={`${item.location.x}${item.location.y}${index}`}
+                        {...getItemProps({ item, index })}
+                      >
+                        {item.address}
+                      </li>
+                    ))}
+                </ul>
               </div>
             )}
           </Grid.Column>

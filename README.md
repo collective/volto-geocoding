@@ -1,6 +1,7 @@
 # volto-geocoding
 
-A widget for [Volto](https://github.com/plone/volto) to insert values for any language enabled
+A widget for [Volto](https://github.com/plone/volto) to search addresses and save coordinates.
+It requires on the backend a JSON field to save data.
 
 To be used with mrs-developer, see [Volto docs](https://docs.voltocms.com/customizing/add-ons/) for further usage informations.
 
